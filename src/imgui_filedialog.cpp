@@ -11,9 +11,10 @@
 #include <string>
 #include <filesystem>
 #include <sstream>
+#include <algorithm>
+#include <cstring>
 
 #include <imgui.h>
-
 #include "imgui_filedialog.h"
 
 using namespace std::chrono_literals;
@@ -27,22 +28,27 @@ enum ImGuiFileDialogSortOrder_
 	ImGuiFileDialogSortOrder_None
 };
 
-void RefreshInfo(ImFileDialogInfo* dialogInfo)
+void ImFileDialogInfo::refreshPaths()
 {
-	dialogInfo->refreshInfo = false;
-	dialogInfo->currentIndex = 0;
-	dialogInfo->currentFiles.clear();
-	dialogInfo->currentDirectories.clear();
+	refreshInfo = false;
+	currentIndex = 0;
+	currentFiles.clear();
+	currentDirectories.clear();
 
-	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(dialogInfo->directoryPath))
+	for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(directoryPath))
 	{
 		if (entry.is_directory())
 		{
-			dialogInfo->currentDirectories.push_back(entry);
+			currentDirectories.push_back(entry);
 		}
 		else
 		{
-			dialogInfo->currentFiles.push_back(entry);
+			if (fileFilterFunc != nullptr) {
+				if (!fileFilterFunc(entry.path().filename())) {
+					continue;
+				}
+			}
+			currentFiles.push_back(entry);
 		}
 	}
 }
@@ -69,11 +75,10 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo)
 	if (ImGui::Begin(dialogInfo->title.c_str(), open))
 	{
 		if (dialogInfo->currentFiles.empty() && dialogInfo->currentDirectories.empty() || dialogInfo->refreshInfo)
-			RefreshInfo(dialogInfo);
+			dialogInfo->refreshPaths();
 
 		// Draw path
 		ImGui::Text("Path: %s", dialogInfo->directoryPath.string().c_str());
-
 
 		ImGui::BeginChild("##browser", ImVec2(ImGui::GetWindowContentRegionWidth(), 300), true, ImGuiWindowFlags_HorizontalScrollbar);
 		ImGui::Columns(4);
@@ -262,10 +267,16 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo)
 			auto lastWriteTime = directoryEntry.last_write_time();
 			auto st = std::chrono::time_point_cast<std::chrono::system_clock::duration>(lastWriteTime - decltype(lastWriteTime)::clock::now() + std::chrono::system_clock::now());
 			std::time_t tt = std::chrono::system_clock::to_time_t(st);
-			std::tm mt;
-			localtime_s(&mt, &tt);
+			std::tm* mt;
+
+			#ifdef _WIN32
+			localtime_s(mt, &tt);
+			#else
+			mt = localtime(&tt);
+			#endif
+
 			std::stringstream ss;
-			ss << std::put_time(&mt, "%F %R");
+			ss << std::put_time(mt, "%F %R");
 			ImGui::TextUnformatted(ss.str().c_str());
 			ImGui::NextColumn();
 
@@ -294,10 +305,16 @@ bool ImGui::FileDialog(bool* open, ImFileDialogInfo* dialogInfo)
 			auto lastWriteTime = fileEntry.last_write_time();
 			auto st = std::chrono::time_point_cast<std::chrono::system_clock::duration>(lastWriteTime - decltype(lastWriteTime)::clock::now() + std::chrono::system_clock::now());
 			std::time_t tt = std::chrono::system_clock::to_time_t(st);
-			std::tm mt;
-			localtime_s(&mt, &tt);
+			std::tm* mt;
+			
+			#ifdef _WIN32
+			localtime_s(mt, &tt);
+			#else
+			mt = localtime(&tt);
+			#endif
+
 			std::stringstream ss;
-			ss << std::put_time(&mt, "%F %R");
+			ss << std::put_time(mt, "%F %R");
 			ImGui::TextUnformatted(ss.str().c_str());
 			ImGui::NextColumn();
 

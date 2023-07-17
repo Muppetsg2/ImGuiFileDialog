@@ -15,6 +15,12 @@ Add `imgui_filedialog.h` to your C++ project and include it where you use ImGui.
 bool m_fileDialogOpen;
 ImFileDialogInfo m_fileDialogInfo;
 
+// Optional file filter
+m_fileDialogInfo.fileFilterFunc = [](std::string filename) {
+  std::size_t found = filename.find(".json");
+  return found != std::string::npos;
+};
+
 // App logic
 if (ImGui::Button("Save File"))
 {
