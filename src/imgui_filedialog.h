@@ -9,6 +9,8 @@
 
 #include <filesystem>
 #include <imgui.h>
+#include <string>
+#include <vector>
 
 typedef int ImGuiFileDialogType;	// -> enum ImGuiFileDialogType_        // Enum: A file dialog type
 
@@ -32,6 +34,8 @@ struct ImFileDialogInfo
 	size_t currentIndex;
 	std::vector<std::filesystem::directory_entry> currentFiles;
 	std::vector<std::filesystem::directory_entry> currentDirectories;
+	std::function<bool(std::string)> fileFilterFunc = {};
+	void refreshPaths();
 };
 
 namespace ImGui
