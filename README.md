@@ -10,7 +10,7 @@ A simple and lightweight file dialog for Dear ImGui, based on [L2DFileDialog](ht
 - [✨ Features](#-features)
 - [⚙️ Adding to your project](#%EF%B8%8F-adding-to-your-project)
 - [💡 Example Usage](#-example-usage)
-- [🔄 Changes](#%EF%B8%8F-changes)
+- [🔄 Changes](#-changes)
 - [📜 License](#-license)
 
 ### ✨ Features
